@@ -1,0 +1,3 @@
+[submodule "external/rgc"]
+	path = external/rgc
+	url = https://github.com/Ggorets0dev/ru-geolists-creator
