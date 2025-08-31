@@ -30,6 +30,8 @@ file(GLOB INC_FILES "inc/*.h" "inc/*.hpp")
 
 add_executable(NetWeaverD ${SRC_FILES} ${INC_FILES})
 
+target_include_directories(NetWeaverD PRIVATE "inc")
+
 # include(GNUInstallDirs)
 
 # install(TARGETS NetWeaverD
