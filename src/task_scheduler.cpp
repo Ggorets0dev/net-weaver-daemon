@@ -6,44 +6,51 @@ static TaskScheduler* gScheduler = nullptr;
 
 // =============================== TASK
 
-ThreadTask::ThreadTask(ThreadTask&& other) {
-    this->core_ = std::move(other.core_);
-    this->delay_ = other.delay_;
+void ThreadTask::waitForNotify() {
+    auto scheduler = TaskScheduler::getInstance();
+
+    std::unique_lock<std::mutex> lock(*scheduler->getUnionMutex());
+    cv_.wait_for(lock, delay_, [this]() {
+        return this->stop_flag_.load();
+    });
 }
 
 // ===============================
 
 // =============================== SCHEDULER
 
-bool TaskScheduler::stopAllTasks() {
-    return false;
+void TaskScheduler::stopAllTasks() {
+    std::for_each(tasks_.begin(), tasks_.end(), [](auto& task) {
+        task->stop_flag_ = true;
+        task->cv_.notify_all(); // Waking up running task
+    });
 }
 
 TaskId TaskScheduler::addTask(ThreadTask& task) {
-    TaskId maxId;
+    TaskId maxId = 0;
 
     std::for_each(tasks_.begin(), tasks_.end(), [&maxId](const auto& task) {
-        maxId = task.id_;
+        maxId = task->id_;
     });
 
     task.id_ = (maxId + 1);
 
-    tasks_.push_front(std::move(task));
+    tasks_.push_front(&task);
 
     return task.id_;
 }
 
 bool TaskScheduler::startTask(TaskId id) {
     for (auto& task : tasks_) {
-        if (task.id_ != id) {
+        if (task->id_ != id) {
             // Not that task is supposed to be started
             continue;
         }
 
-        task.stop_flag_ = false;
+        task->stop_flag_ = false;
         // Взвести cv...?
 
-        task.thread_ = std::thread([&task] { task.core_(); });
+        task->thread_ = std::thread([&task] { task->core_(); });
 
         return true;
     }
@@ -53,19 +60,39 @@ bool TaskScheduler::startTask(TaskId id) {
 
 bool TaskScheduler::stopTask(TaskId id) {
     for (auto& task : tasks_) {
-        if (task.id_ != id) {
+        if (task->id_ != id) {
             // Not that task is supposed to be stopped
             continue;
         }
 
-        task.stop_flag_ = true;
-        task.cv_.notify_all(); // Waking up running task
+        task->stop_flag_ = true;
+        task->cv_.notify_all(); // Waking up running task
 
         return true;
     }
 
     return false;
 }
+
+void TaskScheduler::removeTask(TaskId id) {
+    tasks_.remove_if([&id](const auto& task) {
+        return task->id_ == id;
+    });
+}
+
+// for (auto& task : tasks_) {
+//     if (task.id_ != id) {
+//         // Not that task is supposed to be stopped
+//         continue;
+//     }
+
+//     task.stop_flag_ = true;
+//     task.cv_.notify_all(); // Waking up running task
+
+//     return true;
+// }
+
+// return false;
 
 TaskScheduler* TaskScheduler::getInstance() {
     if (gScheduler == nullptr) {
@@ -79,6 +106,10 @@ TaskScheduler::~TaskScheduler() {
     if (gScheduler != nullptr) {
         delete gScheduler;
     }
+}
+
+std::mutex* TaskScheduler::getUnionMutex() {
+    return &mutex_;
 }
 
 // ===============================
