@@ -1,18 +1,50 @@
 // #include <iostream>
 #include "thread_tasks.hpp"
+#include "cli_args.hpp"
+#include "software_info.hpp"
 
-int main()
-{
-    initAllTasks();
+#define PRINT_DELIMETER "============================"
 
+static void printSoftwareInfo() {
+    std::cout << PRINT_DELIMETER << std::endl;
+    std::cout << "net-weaver-daemon v" << NV_VERSION_STRING << std::endl;
+    std::cout << "Developer: " << NV_DEVELOPER << std::endl;
+    std::cout << "License: " << NV_LICENSE << std::endl;
+    std::cout << "GitHub: " << NV_REPOSITORY << std::endl;
+    std::cout << PRINT_DELIMETER << std::endl;
+}
+
+int main(int argc, char** argv) {
+    CLI::App app;
     auto scheduler = TaskScheduler::getInstance();
 
-    scheduler->startTask(gBuildListsTask.getTaskId());
+    initAllTasks();
 
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    // SECTION - Parse CMD args using CLI11 lib
+    prepareCmdArgs(app, argc, argv);
 
-    scheduler->stopTask(gBuildListsTask.getTaskId());
+    try {
+        app.parse(argc, argv);
+    } catch (const CLI::CallForHelp &e) {
+        std::cout << app.help() << std::endl; // Standard help
+        return 0;
+    } catch (const CLI::ParseError &e) {
+        return app.exit(e);
+    }
+    // !SECTION
 
+    if (gCmdArgs.isClientMode) {
+        // OpenWRT tasks ...
+    } else if (gCmdArgs.isServerMode) {
+        scheduler->startTask(gBuildListsTask.getTaskId());
+    } else if (gCmdArgs.isShowAbout) {
+        printSoftwareInfo();
+        return 0;
+    } else {
+        // Never going here, CLI11 wont let it happen
+    }
+
+    // Block main thread for never return (daemon mode)
     while(1);
 
     return 0;

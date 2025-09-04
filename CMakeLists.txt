@@ -8,6 +8,10 @@ set(NV_VERSION_STRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJE
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set (PROJECT_INCLUDE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party)
+
 # Поиск утилиты protobuf
 find_package(Protobuf REQUIRED)
 
@@ -28,9 +32,13 @@ configure_file(
 file(GLOB SRC_FILES "src/*.c" "src/*.cpp" "src/*.cc")
 file(GLOB INC_FILES "inc/*.h" "inc/*.hpp")
 
-add_executable(NetWeaverD ${SRC_FILES} ${INC_FILES})
+# Get all third-party dependencies
+file(GLOB TC_SRC_FILES "third-party/*.c" "third-party/*.cpp" "third-party/*.cc")
+file(GLOB TC_INC_FILES "third-party/*.h" "third-party/*.hpp")
 
-target_include_directories(NetWeaverD PRIVATE "inc")
+add_executable(NetWeaverD ${SRC_FILES} ${INC_FILES} ${TC_INC_FILES} ${TC_SRC_FILES})
+
+target_include_directories(NetWeaverD PRIVATE ${PROJECT_INCLUDE_DIRS})
 
 # include(GNUInstallDirs)
 
