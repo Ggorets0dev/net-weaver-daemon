@@ -8,6 +8,8 @@
 #include <functional>
 #include <thread>
 
+#include "event_flag_grp.hpp"
+
 // For debug. In real work there is no task with seconds delay
 #define TASK_DELAY_TYPE_SEC
 
@@ -18,18 +20,28 @@ using TaskDelay = std::chrono::seconds;
 using TaskDelay = std::chrono::minutes;
 #endif
 
+#define APPLY_ONESHOT_TCOR_WRAPPER(core)    ThreadTask::applyOneShotWrapper(core)
+#define APPLY_LOOP_TCOR_WRAPPER(core)       ThreadTask::applyLoopWrapper(core)
+
+// forward-declaration
+class ThreadTask;
+
 // Task ID in scheduler's list
 using TaskId = uint16_t;
 
 // Function to perform in other thread
-using TaskCore = std::function<void()>;
+using TaskCore = std::function<void(ThreadTask*)>;
+
+// Wrapper for task core with different types of behaviour
+using TaskCoreWrapper = std::function<bool(ThreadTask*)>;
 
 class ThreadTask {
     friend class TaskScheduler;
 
 private:
-    TaskCore core_;
+    TaskCoreWrapper core_;
     TaskDelay delay_;
+    EventFlags::EventFlagGroup* schedDelGrp_ {nullptr};
 
     TaskId id_;
     std::atomic<bool> stop_flag_ {false};
@@ -44,20 +56,32 @@ public:
 
     void waitForNotify();
 
-    void setTaskCore(TaskCore&& core) { core_ = std::move(core); };
+    void notifyDeletion();
+
+    void setTaskCore(TaskCoreWrapper core) { core_ = core; };
 
     bool getStopFlag() { return stop_flag_.load(); }
 
     TaskId getTaskId() { return id_; }
+
+    static TaskCoreWrapper applyOneShotWrapper(const TaskCore& core);
+    static TaskCoreWrapper applyLoopWrapper(const TaskCore& core);
 };
 
 class TaskScheduler {
 private:
+    using TasksContainer = std::forward_list<ThreadTask*>;
+    using TaskIterator = TasksContainer::iterator;
+
     std::mutex mutex_;
-    std::forward_list<ThreadTask*> tasks_;
+    TasksContainer tasks_;
+    EventFlags::EventFlagGroup delGrp_;
 
     // Singleton
     TaskScheduler() {}
+
+    void resetTCB(TaskIterator& iter);
+    void resetTCB(TaskId id);
 
 public:
     static TaskScheduler* getInstance();
@@ -73,6 +97,8 @@ public:
     void removeTask(TaskId id);
 
     std::mutex* getUnionMutex();
+
+    void controlDelitions();
 
     ~TaskScheduler();
 };

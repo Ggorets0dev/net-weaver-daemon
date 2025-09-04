@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <chrono>
 
 #include "task_scheduler.hpp"
 
@@ -21,6 +20,39 @@ void ThreadTask::waitForNotify() {
     });
 }
 
+void ThreadTask::notifyDeletion() {
+    if (schedDelGrp_ == nullptr) {
+        // Scheduler is not used, exiting
+        return;
+    }
+
+    schedDelGrp_->set((1u << id_));
+}
+
+TaskCoreWrapper ThreadTask::applyOneShotWrapper(const TaskCore& core) {
+    return [&core](ThreadTask* task) {
+        core(task);
+        task->notifyDeletion();
+
+        return true;
+    };
+}
+
+TaskCoreWrapper ThreadTask::applyLoopWrapper(const TaskCore& core) {
+    return [&core](ThreadTask* task) {
+        while (!task->getStopFlag()) {
+            core(task);
+
+            // Wait for notify
+            task->waitForNotify();
+        }
+
+        task->notifyDeletion();
+
+        return true;
+    };
+}
+
 // ===============================
 
 // =============================== SCHEDULER
@@ -40,6 +72,7 @@ TaskId TaskScheduler::addTask(ThreadTask& task) {
     });
 
     task.id_ = (maxId + 1);
+    task.schedDelGrp_ = &delGrp_;
 
     tasks_.push_front(&task);
 
@@ -55,7 +88,7 @@ bool TaskScheduler::startTask(TaskId id) {
 
     if (isFound) {
         (*iter)->stop_flag_ = false;
-        (*iter)->thread_ = std::thread([&iter] { (*iter)->core_(); });
+        (*iter)->thread_ = std::thread([iter] { (*iter)->core_(*iter); });
     }
 
     return isFound;
@@ -98,6 +131,37 @@ TaskScheduler::~TaskScheduler() {
 
 std::mutex* TaskScheduler::getUnionMutex() {
     return &mutex_;
+}
+
+void TaskScheduler::resetTCB(TaskIterator& iter) {
+    (*iter)->stop_flag_ = false;
+    // reset other fields
+}
+
+void TaskScheduler::resetTCB(TaskId id) {
+    auto iter = std::find_if(tasks_.begin(), tasks_.end(), [&id](const auto& task) {
+        return (task->id_ == id);
+    });
+
+    bool isFound = (iter != tasks_.end());
+
+    if (isFound) {
+        resetTCB(iter);
+    }
+}
+
+void TaskScheduler::controlDelitions() {
+    EventFlags::Flags flags;
+
+    while (1) {
+        flags = delGrp_.waitAny(std::numeric_limits<EventFlags::Flags>::max());
+
+        for (uint8_t i(0); i < sizeof(flags) * 8; ++i) {
+            if (IS_BIT_SET(flags, i)) {
+                resetTCB(i);
+            }
+        }
+    }
 }
 
 // ===============================

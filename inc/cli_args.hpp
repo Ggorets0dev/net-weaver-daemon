@@ -12,8 +12,6 @@ struct CmdArgs {
 
 extern CmdArgs gCmdArgs;
 
-extern CLI::Option* gRemoveExtraOption;
-
 void prepareCmdArgs(CLI::App& app, int argc, char** argv);
 
 #endif // CLI_ARGS_HPP

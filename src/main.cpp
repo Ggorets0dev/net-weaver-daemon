@@ -36,6 +36,7 @@ int main(int argc, char** argv) {
     if (gCmdArgs.isClientMode) {
         // OpenWRT tasks ...
     } else if (gCmdArgs.isServerMode) {
+        scheduler->startTask(gRecieveListsTask.getTaskId());
         scheduler->startTask(gBuildListsTask.getTaskId());
     } else if (gCmdArgs.isShowAbout) {
         printSoftwareInfo();
@@ -45,7 +46,8 @@ int main(int argc, char** argv) {
     }
 
     // Block main thread for never return (daemon mode)
-    while(1);
+    // Main thread is for Scheduler and it's job
+    scheduler->controlDelitions();
 
     return 0;
 }

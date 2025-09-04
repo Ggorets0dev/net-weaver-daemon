@@ -4,6 +4,7 @@
 #include "task_scheduler.hpp"
 
 extern ThreadTask gBuildListsTask;
+extern ThreadTask gRecieveListsTask;
 
 void initAllTasks();
 
