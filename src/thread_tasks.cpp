@@ -1,6 +1,7 @@
 #include "thread_tasks.hpp"
 #include "log.hpp"
 #include "build_lists_handler.hpp"
+#include "ipc_chain.hpp"
 
 #include <unistd.h>
 #include <signal.h>
@@ -25,8 +26,7 @@ TaskCore buildLists = [](ThreadTask* task) {
 
         LOG_INFO("Fork in BuildListsTask is completed, child process created");
 
-#warning "Correct path of RGC is required"
-        //execl("./process_B", "process_B", nullptr);
+        execl(RGC_INSTALL_PATH, "RuGeolistsCreator", nullptr);
 
         LOG_ERROR("Failed to run RuGeolistsCreator for building lists");
         exit(EXIT_FAILURE);

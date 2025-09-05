@@ -1,12 +1,12 @@
 #include "build_lists_handler.hpp"
 #include "log.hpp"
+#include "ipc_chain.hpp"
 
 #include <fcntl.h>
 #include <unistd.h>
 
 void handleBuildEndSignal(int sig) {
-#warning "Correct name of FIFO is required"
-    const char* pathFIFO = "data.fifo";
+    const char* pathFIFO = RGC_RELEASE_NOTES_FIFO_PATH;
     int fd = open(pathFIFO, O_RDONLY);
     char buffer[256];
     int bytesCount;

@@ -36,9 +36,9 @@ file(GLOB INC_FILES "inc/*.h" "inc/*.hpp")
 file(GLOB TC_SRC_FILES "third-party/*.c" "third-party/*.cpp" "third-party/*.cc")
 file(GLOB TC_INC_FILES "third-party/*.h" "third-party/*.hpp")
 
-add_executable(NetWeaverD ${SRC_FILES} ${INC_FILES} ${TC_INC_FILES} ${TC_SRC_FILES})
+add_executable(NetWeaverD ${SRC_FILES} ${INC_FILES} ${TC_INC_FILES} ${TC_SRC_FILES} ${RGC_IPC_CHAIN_INC_FILE})
 
-target_include_directories(NetWeaverD PRIVATE ${PROJECT_INCLUDE_DIRS})
+target_include_directories(NetWeaverD PRIVATE ${PROJECT_INCLUDE_DIRS} ${RGC_IPC_CHAIN_DIR})
 
 target_link_libraries(NetWeaverD PRIVATE
 	${Protobuf_LIBRARIES}     
