@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(NetWeaverD LANGUAGES CXX VERSION 0.1.0)
 
-# Формирование строки версии
+# Create string with full version
 set(NV_VERSION_STRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 
 set(CMAKE_CXX_STANDARD 17)
@@ -12,27 +12,27 @@ set (PROJECT_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
     ${CMAKE_CURRENT_SOURCE_DIR}/third-party)
 
-# Поиск утилиты protobuf
+# Trying to find in system: protobuf
 find_package(Protobuf REQUIRED)
 
-# Пытаемся найти Abseil
+# Trying to find in system: Abseil
 find_package(absl REQUIRED)
 
-# Добавляем подпроект
+# Adding RuGeolistsCreator as subproject
 add_subdirectory(external/rgc)
 
-# Генерация software_info.hpp
+# Generating software info in software_info.hpp
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/inc/software_info.hpp.in
     ${CMAKE_CURRENT_SOURCE_DIR}/inc/software_info.hpp
     @ONLY
 )
 
-# Получение основных исходников проекта
+# Collecting all main sources of project
 file(GLOB SRC_FILES "src/*.c" "src/*.cpp" "src/*.cc")
 file(GLOB INC_FILES "inc/*.h" "inc/*.hpp")
 
-# Get all third-party dependencies
+# Collecting all third-party sources of project
 file(GLOB TC_SRC_FILES "third-party/*.c" "third-party/*.cpp" "third-party/*.cc")
 file(GLOB TC_INC_FILES "third-party/*.h" "third-party/*.hpp")
 

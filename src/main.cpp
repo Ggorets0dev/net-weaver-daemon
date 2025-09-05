@@ -2,6 +2,7 @@
 #include "thread_tasks.hpp"
 #include "cli_args.hpp"
 #include "software_info.hpp"
+#include "log.hpp"
 
 #define PRINT_DELIMETER "============================"
 
@@ -18,6 +19,10 @@ int main(int argc, char** argv) {
     CLI::App app;
     auto scheduler = TaskScheduler::getInstance();
 
+    // Init log handlers
+    initLogging();
+
+    // Init tasks with cores in scheduler
     initAllTasks();
 
     // SECTION - Parse CMD args using CLI11 lib
@@ -36,8 +41,10 @@ int main(int argc, char** argv) {
     if (gCmdArgs.isClientMode) {
         // OpenWRT tasks ...
         scheduler->startTask(gRecieveListsTask.getTaskId());
+        LOG_INFO("All tasks for client mode were started successfully");
     } else if (gCmdArgs.isServerMode) {
         scheduler->startTask(gBuildListsTask.getTaskId());
+        LOG_INFO("All tasks for server mode were started successfully");
     } else if (gCmdArgs.isShowAbout) {
         printSoftwareInfo();
         return 0;
@@ -49,5 +56,5 @@ int main(int argc, char** argv) {
     // Main thread is for Scheduler and it's job
     scheduler->controlDelitions();
 
-    return 0;
+    return EXIT_SUCCESS;
 }
