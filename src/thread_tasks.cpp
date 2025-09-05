@@ -1,5 +1,4 @@
 #include "thread_tasks.hpp"
-#include <iostream>
 
 #define RECIEVE_LISTS_TASK_DELAY    1u
 #define BUILD_LISTS_TASK_DELAY      3u
@@ -11,25 +10,13 @@ ThreadTask gRecieveListsTask(TaskDelay(RECIEVE_LISTS_TASK_DELAY));
 
 // ============ TASKS CORES
 TaskCore buildLists = [](ThreadTask* task) {
-    // >>>
-
-    static uint16_t inx = 0;
-
-    ++inx;
-
-    std::cout << "---> BUILD = " << inx << std::endl;
-    // <<<
+    // ============ BUILD LISTS TASK-CORE
+    // ============
 };
 
 TaskCore recieveLists = [](ThreadTask* task) {
-    // >>>
-
-    static uint16_t inx = 0;
-
-    ++inx;
-
-    std::cout << "---> RECIEVE = " << inx << std::endl;
-    // <<<
+    // ============ RECIEVE LISTS TASK-CORE
+    // ============
 };
 // ============
 

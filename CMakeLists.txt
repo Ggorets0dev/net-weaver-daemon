@@ -40,8 +40,21 @@ add_executable(NetWeaverD ${SRC_FILES} ${INC_FILES} ${TC_INC_FILES} ${TC_SRC_FIL
 
 target_include_directories(NetWeaverD PRIVATE ${PROJECT_INCLUDE_DIRS})
 
+target_link_libraries(NetWeaverD PRIVATE
+	${Protobuf_LIBRARIES}     
+	log4cxx)
+
 # include(GNUInstallDirs)
 
 # install(TARGETS NetWeaverD
 #     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 # )
+
+# Install log config into ~./config/..
+install(CODE "
+  execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory \$ENV{HOME}/.config/net-weaver)
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/log4cxx.properties
+    \$ENV{HOME}/.config/net-weaver/log4cxx.properties
+  )
+")

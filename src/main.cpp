@@ -35,8 +35,8 @@ int main(int argc, char** argv) {
 
     if (gCmdArgs.isClientMode) {
         // OpenWRT tasks ...
-    } else if (gCmdArgs.isServerMode) {
         scheduler->startTask(gRecieveListsTask.getTaskId());
+    } else if (gCmdArgs.isServerMode) {
         scheduler->startTask(gBuildListsTask.getTaskId());
     } else if (gCmdArgs.isShowAbout) {
         printSoftwareInfo();
