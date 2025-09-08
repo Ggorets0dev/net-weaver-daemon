@@ -36,19 +36,28 @@ file(GLOB INC_FILES "inc/*.h" "inc/*.hpp")
 file(GLOB TC_SRC_FILES "third-party/*.c" "third-party/*.cpp" "third-party/*.cc")
 file(GLOB TC_INC_FILES "third-party/*.h" "third-party/*.hpp")
 
-add_executable(NetWeaverD ${SRC_FILES} ${INC_FILES} ${TC_INC_FILES} ${TC_SRC_FILES} ${RGC_IPC_CHAIN_INC_FILE})
+add_executable(NetWeaverD ${SRC_FILES} ${INC_FILES} ${TC_INC_FILES} ${TC_SRC_FILES} ${RGC_IPC_CHAIN_INC_FILE} ${RGC_IPC_PROTO_GEN_SRC_FILES} ${RGC_IPC_PROTO_GEN_INC_FILES})
 
-target_include_directories(NetWeaverD PRIVATE ${PROJECT_INCLUDE_DIRS} ${RGC_IPC_CHAIN_DIR})
+add_dependencies(NetWeaverD RuGeolistsCreator)
+
+target_include_directories(NetWeaverD PRIVATE ${PROJECT_INCLUDE_DIRS} ${RGC_IPC_CHAIN_DIR} ${RGC_IPC_PROTO_INC_DIR})
 
 target_link_libraries(NetWeaverD PRIVATE
-	${Protobuf_LIBRARIES}     
+        ${Protobuf_LIBRARIES}
+        absl::log_internal_check_op
+        absl::strings
+        absl::base
+        pthread
 	log4cxx)
 
-# include(GNUInstallDirs)
+# Set .local as destination for deploy
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(HOME_DIR $ENV{HOME})
+  set(CMAKE_INSTALL_PREFIX "${HOME_DIR}/.local")
+endif()
 
-# install(TARGETS NetWeaverD
-#     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-# )
+# Install software into ~/.local/bin
+install(TARGETS NetWeaverD DESTINATION bin)
 
 # Install log config into ~./config/..
 install(CODE "

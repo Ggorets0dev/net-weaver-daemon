@@ -1,3 +1,4 @@
 build/
+build_proj/
 CMakeLists.txt.user
 inc/software_info.hpp
