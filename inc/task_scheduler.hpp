@@ -9,15 +9,15 @@
 #include <thread>
 
 #include "event_flag_grp.hpp"
+#include "build_config.hpp"
 
-// For debug. In real work there is no task with seconds delay
-#define TASK_DELAY_TYPE_SEC
-
-#ifdef TASK_DELAY_TYPE_SEC
+#ifdef USE_DELAY_UNITS_SEC
 // Tasks delay type before restart
 using TaskDelay = std::chrono::seconds;
-#else
+#elif USE_DELAY_UNITS_MIN
 using TaskDelay = std::chrono::minutes;
+#elif USE_DELAY_UNITS_HOURS
+using TaskDelay = std::chrono::hours;
 #endif
 
 #define APPLY_ONESHOT_TCOR_WRAPPER(core)    ThreadTask::applyOneShotWrapper(core)

@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
 
     if (gCmdArgs.isClientMode) {
         // OpenWRT tasks ...
-        scheduler->startTask(gRecieveListsTask.getTaskId());
+        scheduler->startTask(gReceiveListsTask.getTaskId());
         LOG_INFO("All tasks for client mode were started successfully");
     } else if (gCmdArgs.isServerMode) {
         scheduler->startTask(gBuildListsTask.getTaskId());

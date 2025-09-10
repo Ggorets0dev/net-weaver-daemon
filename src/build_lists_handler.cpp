@@ -14,6 +14,7 @@
 struct DataIPC {
     geo_release::ReleaseNotes releaseNotes;
     bool parseStatus;
+    bool sourceActualStatus;
 };
 
 static DataIPC* gpDataIPC;
@@ -59,22 +60,26 @@ static void printReleaseNotes(const geo_release::ReleaseNotes& release_notes) {
 TaskCore gBuildListsCore = [](ThreadTask* task) {
     pid_t pid = fork();
     int status;
-    DataIPC data;
+    DataIPC data = {
+        .parseStatus = false,
+        .sourceActualStatus = false
+    };
 
     gpDataIPC = &data;
 
     // Adding signal handler for collecting data from FIFO
     signal(SIGUSR1, handleBuildEndSignal);
+    signal(SIGUSR2, handleBuildEndSignal);
 
     if (pid == 0) {
         // Child process, running RGC...
 
         LOG_INFO("Fork in BuildListsTask is completed, child process created");
 
-        execl(RGC_INSTALL_PATH, "RuGeolistsCreator", "--child", "--force", nullptr);
+        execl(RGC_INSTALL_PATH, "RuGeolistsCreator", "--child", nullptr);
 
         LOG_ERROR("Failed to run RuGeolistsCreator for building lists");
-        exit(EXIT_FAILURE);
+        return;
     } else if (pid > 0) {
         // Waiting for RGC to build lists
         waitpid(pid, &status, 0);
@@ -86,36 +91,49 @@ TaskCore gBuildListsCore = [](ThreadTask* task) {
 
         LOG_INFO("Child proccess for building lists is completed");
 
-        if (!data.parseStatus) {
+        if (!data.parseStatus && !data.sourceActualStatus) {
             LOG_ERROR("Failed to parse data from child process or it didnt send anything before exit");
             return;
         }
 
         signal(SIGUSR1, SIG_IGN);
+        signal(SIGUSR2, SIG_IGN);
+
+        if (data.sourceActualStatus) {
+            LOG_INFO("Check for updates in lists was successfully performed, no need to update");
+            return;
+        }
 
         printReleaseNotes(data.releaseNotes);
+        // Work with lists
     }
 };
 // ============
 
 void handleBuildEndSignal(int sig) {
-    (void)sig;
+    if (sig == SIGUSR1) {
+        // Build is completed, time to recieve data using IPC
 
-    const char* pathFIFO = RGC_RELEASE_NOTES_FIFO_PATH;
-    int fd = open(pathFIFO, O_RDONLY);
-    bool status;
+        const char* pathFIFO = RGC_RELEASE_NOTES_FIFO_PATH;
+        int fd = open(pathFIFO, O_RDONLY);
+        bool status;
 
-    if (fd == -1) {
-        LOG_ERROR(FILE_OPEN_ERROR_MSG);
-        LOG_ERROR("Could not find the FIFO for IPC with child process");
-        return;
-    }
+        if (fd == -1) {
+            LOG_ERROR(FILE_OPEN_ERROR_MSG);
+            LOG_ERROR("Could not find the FIFO for IPC with child process");
+            return;
+        }
 
-    gpDataIPC->parseStatus = gpDataIPC->releaseNotes.ParseFromFileDescriptor(fd);
+        gpDataIPC->parseStatus = gpDataIPC->releaseNotes.ParseFromFileDescriptor(fd);
 
-    close(fd);
+        close(fd);
 
-    if (fs::exists(pathFIFO)) {
-        fs::remove(pathFIFO);
+        if (fs::exists(pathFIFO)) {
+            fs::remove(pathFIFO);
+        }
+    } else { // SIGUSR2
+        // Data is actual, no update needed
+
+        gpDataIPC->sourceActualStatus = true;
     }
 }
