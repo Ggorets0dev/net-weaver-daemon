@@ -3,11 +3,13 @@
 
 #include "ipc_chain.hpp"
 #include "release_notes.pb.h"
+#include "fs_tools.hpp"
 
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <iostream>
 
 struct DataIPC {
     geo_release::ReleaseNotes releaseNotes;
@@ -16,7 +18,42 @@ struct DataIPC {
 
 static DataIPC* gpDataIPC;
 
+using namespace std;
+
 void handleBuildEndSignal(int sig);
+
+static void printReleaseNotes(const geo_release::ReleaseNotes& release_notes) {
+    // Вывод FilesPaths
+    cout << "Files Paths:" << endl;
+    cout << "  Domain list: " << release_notes.files_paths().domain_list() << endl;
+    cout << "  IP list: " << release_notes.files_paths().ip_list() << endl;
+
+    // Вывод времени
+    cout << "Time: " << release_notes.time() << endl;
+
+    // Вывод источников
+    cout << "Sources:" << endl;
+    for (int i = 0; i < release_notes.sources_size(); i++) {
+        const geo_release::ReleaseNotes::Source& source = release_notes.sources(i);
+        cout << "  Source " << i + 1 << ":" << endl;
+        cout << "    Section: " << source.section() << endl;
+        cout << "    Type: ";
+
+        // Преобразование enum в строку
+        switch (source.type()) {
+        case geo_release::ReleaseNotes::DOMAIN:
+            cout << "DOMAIN";
+            break;
+        case geo_release::ReleaseNotes::IP:
+            cout << "IP";
+            break;
+        default:
+            cout << "UNKNOWN";
+            break;
+        }
+        cout << endl;
+    }
+}
 
 // ============ BUILD LISTS TASK-CORE
 TaskCore gBuildListsCore = [](ThreadTask* task) {
@@ -26,19 +63,19 @@ TaskCore gBuildListsCore = [](ThreadTask* task) {
 
     gpDataIPC = &data;
 
+    // Adding signal handler for collecting data from FIFO
+    signal(SIGUSR1, handleBuildEndSignal);
+
     if (pid == 0) {
         // Child process, running RGC...
 
         LOG_INFO("Fork in BuildListsTask is completed, child process created");
 
-        execl(RGC_INSTALL_PATH, "RuGeolistsCreator", "--child" ,nullptr);
+        execl(RGC_INSTALL_PATH, "RuGeolistsCreator", "--child", "--force", nullptr);
 
         LOG_ERROR("Failed to run RuGeolistsCreator for building lists");
         exit(EXIT_FAILURE);
     } else if (pid > 0) {
-        // Adding signal handler for collecting data from FIFO
-        signal(SIGUSR1, handleBuildEndSignal);
-
         // Waiting for RGC to build lists
         waitpid(pid, &status, 0);
 
@@ -54,7 +91,9 @@ TaskCore gBuildListsCore = [](ThreadTask* task) {
             return;
         }
 
-        // Work with release...
+        signal(SIGUSR1, SIG_IGN);
+
+        printReleaseNotes(data.releaseNotes);
     }
 };
 // ============
@@ -74,6 +113,9 @@ void handleBuildEndSignal(int sig) {
 
     gpDataIPC->parseStatus = gpDataIPC->releaseNotes.ParseFromFileDescriptor(fd);
 
-    // Deleting FIFO
-    unlink(pathFIFO);
+    close(fd);
+
+    if (fs::exists(pathFIFO)) {
+        fs::remove(pathFIFO);
+    }
 }

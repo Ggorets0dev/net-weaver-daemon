@@ -22,9 +22,6 @@ int main(int argc, char** argv) {
     // Init log handlers
     initLogging();
 
-    // Init tasks with cores in scheduler
-    initAllTasks();
-
     // SECTION - Parse CMD args using CLI11 lib
     prepareCmdArgs(app, argc, argv);
 
@@ -37,6 +34,9 @@ int main(int argc, char** argv) {
         return app.exit(e);
     }
     // !SECTION
+
+    // Init tasks with cores in scheduler
+    initAllTasks();
 
     if (gCmdArgs.isClientMode) {
         // OpenWRT tasks ...

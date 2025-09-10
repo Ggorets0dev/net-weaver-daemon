@@ -3,7 +3,7 @@
 #include "build_lists_handler.hpp"
 
 #define RECIEVE_LISTS_TASK_DELAY    1u
-#define BUILD_LISTS_TASK_DELAY      3u
+#define BUILD_LISTS_TASK_DELAY      20u
 
 // ============ TASKS CONTROL BLOCKS
 ThreadTask gBuildListsTask(TaskDelay(BUILD_LISTS_TASK_DELAY));
