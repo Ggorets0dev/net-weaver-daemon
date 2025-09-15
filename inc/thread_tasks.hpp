@@ -5,6 +5,7 @@
 
 extern ThreadTask gBuildListsTask;
 extern ThreadTask gReceiveListsTask;
+extern ThreadTask gTransmitListsTask;
 
 void initAllTasks();
 

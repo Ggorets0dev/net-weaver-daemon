@@ -1,18 +1,15 @@
 #include "thread_tasks.hpp"
 #include "log.hpp"
-#include "build_lists_handler.hpp"
 #include "build_config.hpp"
+
+#include "build_handler.hpp"
+#include "transmit_handler.hpp"
+#include "receive_handler.hpp"
 
 // ============ TASKS CONTROL BLOCKS
 ThreadTask gBuildListsTask(TaskDelay(BUILD_LISTS_TASK_DELAY));
 ThreadTask gReceiveListsTask(TaskDelay(RECEIVE_LISTS_TASK_DELAY));
-// ============
-
-// ============ TASKS CORES
-TaskCore receiveLists = [](ThreadTask* task) {
-    // ============ RECIEVE LISTS TASK-CORE
-    // ============
-};
+ThreadTask gTransmitListsTask(TaskDelay(TRANSMIT_LISTS_TASK_DELAY));
 // ============
 
 void initAllTasks() {
@@ -20,11 +17,13 @@ void initAllTasks() {
 
     // ============ Set cores to all tasks
     gBuildListsTask.setTaskCore(APPLY_LOOP_TCOR_WRAPPER(gBuildListsCore));
-    gReceiveListsTask.setTaskCore(APPLY_LOOP_TCOR_WRAPPER(receiveLists));
+    gTransmitListsTask.setTaskCore(APPLY_LOOP_TCOR_WRAPPER(gTransmitListsCore));
+    gReceiveListsTask.setTaskCore(APPLY_LOOP_TCOR_WRAPPER(gReceiveListsCore));
     // ============
 
     // ============ Add all tasks to scheduler
     scheduler->addTask(gBuildListsTask);
+    scheduler->addTask(gTransmitListsTask);
     scheduler->addTask(gReceiveListsTask);
     // ============
 

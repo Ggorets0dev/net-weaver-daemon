@@ -10,6 +10,10 @@
 
 #define BUILD_LISTS_TASK_DELAY      20u
 #define RECEIVE_LISTS_TASK_DELAY    10u
+#define TRANSMIT_LISTS_TASK_DELAY   0u
 // =====================
+
+// Set special emojis before texts in logs
+// #define USE_EMOGI_MARKERS
 
 #endif // BUILD_CONFIG_HPP
