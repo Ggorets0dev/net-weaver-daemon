@@ -76,7 +76,8 @@ TaskCore gBuildListsCore = [](ThreadTask* task) {
 
         LOG_INFO("Fork in BuildListsTask is completed, child process created");
 
-        execl(RGC_INSTALL_PATH, "RuGeolistsCreator", "--child", nullptr);
+        // FIXME: GET FROM CONFIG, NO HARDCODE
+        execl(RGC_INSTALL_PATH, "RuGeolistsCreator", "--out", "/home/uav/rgc_geolists", "--child", nullptr);
 
         LOG_ERROR("Failed to run RuGeolistsCreator for building lists");
         return;

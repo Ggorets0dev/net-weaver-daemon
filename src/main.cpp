@@ -44,6 +44,7 @@ int main(int argc, char** argv) {
         LOG_INFO("All tasks for client mode were started successfully");
     } else if (gCmdArgs.isServerMode) {
         scheduler->startTask(gBuildListsTask.getTaskId());
+        scheduler->startTask(gTransmitListsTask.getTaskId());
         LOG_INFO("All tasks for server mode were started successfully");
     } else if (gCmdArgs.isShowAbout) {
         printSoftwareInfo();

@@ -15,7 +15,7 @@ namespace PostMethods {
         using MsgTimeout = std::chrono::seconds;
 
         bool addMessage(MsgPtr msg);
-        MsgPtr waitForMessage(MsgTimeout timeout);
+        MsgPtr waitForMessage(MsgTimeout timeout = MsgTimeout::zero());
         MsgPtr tryGetMessage();
 
     private:

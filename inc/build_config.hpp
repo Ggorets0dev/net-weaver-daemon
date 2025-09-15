@@ -13,6 +13,12 @@
 #define TRANSMIT_LISTS_TASK_DELAY   0u
 // =====================
 
+// =====================
+// TASKS MQs SIZE
+// =====================
+#define TRANSMIT_LISTS_TASK_MQ_SIZE 2u
+// =====================
+
 // Set special emojis before texts in logs
 // #define USE_EMOGI_MARKERS
 

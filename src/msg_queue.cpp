@@ -15,7 +15,15 @@ bool MessageQueue::addMessage(MsgPtr msg) {
 
 MessageQueue::MsgPtr MessageQueue::waitForMessage(MsgTimeout timeout) {
     std::unique_lock<std::mutex> lock(mtx_);
-    auto status = cv_.wait_for(lock, timeout , [&] { return !queue_.empty(); });
+
+    bool status;
+
+    if (timeout != MsgTimeout::zero()) {
+        status = cv_.wait_for(lock, timeout , [&] { return !queue_.empty(); });
+    } else {
+        cv_.wait(lock, [&] { return !queue_.empty(); });
+        status = true;
+    }
 
     if (!status) {
         return nullptr;
@@ -28,6 +36,8 @@ MessageQueue::MsgPtr MessageQueue::waitForMessage(MsgTimeout timeout) {
 }
 
 MessageQueue::MsgPtr MessageQueue::tryGetMessage() {
+    std::unique_lock<std::mutex> lock(mtx_);
+
     if (!queue_.empty()) {
         auto data = queue_.front();
         queue_.pop();
